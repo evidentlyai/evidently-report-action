@@ -56,6 +56,14 @@ inputs:
     required: false
     default: 'true'
 
+outputs:
+  exit_code:
+    description: "Exit code of the Evidently CLI run"
+    value: ${{ steps.run-cli.outputs.exit_code }}
+  found_link:
+    description: "Report snapshot link, if found"
+    value: ${{ steps.extract-link.outputs.found_link }}
+
 runs:
   using: "composite"
   steps:
