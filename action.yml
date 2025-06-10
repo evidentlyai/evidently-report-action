@@ -56,8 +56,17 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v4
+    - name: Check existing Python
+      id: check-python
+      run: |
+        if command -v python &> /dev/null; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
 
     - uses: actions/setup-python@v5
+      if: steps.check-python.outputs.exists == 'false'
       with:
         python-version: "3.12"
 

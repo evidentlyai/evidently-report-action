@@ -5,8 +5,8 @@ Reusable GitHub Action for running Evidently CLI reports with local and cloud ou
 ## Usage
 
 ```yaml
-- uses: yourusername/evidently-report-action@v1
+- uses: evidentlyai/evidently-report-action@v1
   with:
-    config_path: "config/report.yaml"
+    config_path: "config/report.json"
     api_key: ${{ secrets.EVIDENTLY_API_KEY }}
     upload_artifacts: "true"
