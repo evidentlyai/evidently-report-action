@@ -25,7 +25,7 @@ inputs:
   test_summary:
     description: "Run tests summary"
     required: false
-    default: "false"
+    default: "true"
   save_dataset:
     description: "Save output dataset"
     required: false
