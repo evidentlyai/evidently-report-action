@@ -95,7 +95,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install -r requirements.txt
+      run: pip install git+https://github.com/evidentlyai/evidently@feature/eval-cli
 
     - name: Build input and output URIs
       id: build-uris
