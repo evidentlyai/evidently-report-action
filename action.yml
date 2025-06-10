@@ -60,15 +60,14 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v4
+
     - name: Check if actions/setup-python has run
       id: check-python-setup
       run: |
         if [ -n "$pythonLocation" ]; then
           echo "exists=true" >> $GITHUB_OUTPUT
-          echo "Detected setup-python at $pythonLocation"
         else
           echo "exists=false" >> $GITHUB_OUTPUT
-          echo "setup-python has NOT been run yet"
         fi
       shell: bash
 
@@ -76,6 +75,7 @@ runs:
       if: steps.check-python-setup.outputs.exists == 'false'
       with:
         python-version: "3.12"
+
     - name: Cache pip dependencies
       if: ${{ inputs.use_pip_cache == 'true' }}
       uses: actions/cache@v4
@@ -115,6 +115,7 @@ runs:
     - name: Run Evidently CLI Report
       id: run-cli
       shell: bash
+      continue-on-error: true
       env:
         EVIDENTLY_API_KEY: ${{ inputs.api_key }}
       run: |
@@ -128,6 +129,7 @@ runs:
           $( [ "${{ inputs.test_summary }}" = "true" ] && echo "--test-summary" ) \
           $( [ "${{ inputs.save_dataset }}" = "false" ] && echo "--no-save-dataset" ) \
           $( [ "${{ inputs.save_report }}" = "false" ] && echo "--no-save-report" ) | tee output.log
+        echo "exit_code=$?" >> $GITHUB_OUTPUT
 
     - name: Extract report link from CLI output
       id: extract-link
@@ -148,3 +150,10 @@ runs:
       with:
         name: evidently-results
         path: ${{ steps.build-uris.outputs.output }}
+
+    - name: Fail action if CLI failed
+      if: steps.run-cli.outputs.exit_code != '0'
+      shell: bash
+      run: |
+        echo "❌ Evidently CLI failed with exit code ${{ steps.run-cli.outputs.exit_code }}"
+        exit 1
