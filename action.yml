@@ -129,7 +129,6 @@ runs:
         echo "::notice title=Evidently Report Link::${{ steps.extract-link.outputs.found_link }}"
 
     - name: Upload result artifacts
-      shell: bash
       if: ${{ inputs.upload_artifacts == 'true' && steps.extract-link.outputs.found_link == '' }}
       uses: actions/upload-artifact@v4
       with:
