@@ -56,18 +56,20 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v4
-    - name: Check existing Python
-      shell: bash
-      id: check-python
+    - name: Check if actions/setup-python has run
+      id: check-python-setup
       run: |
-        if command -v python &> /dev/null; then
+        if [ -n "$pythonLocation" ]; then
           echo "exists=true" >> $GITHUB_OUTPUT
+          echo "Detected setup-python at $pythonLocation"
         else
           echo "exists=false" >> $GITHUB_OUTPUT
+          echo "setup-python has NOT been run yet"
         fi
+      shell: bash
 
     - uses: actions/setup-python@v5
-      if: steps.check-python.outputs.exists == 'false'
+      if: steps.check-python-setup.outputs.exists == 'false'
       with:
         python-version: "3.12"
 
