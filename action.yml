@@ -57,6 +57,7 @@ runs:
   steps:
     - uses: actions/checkout@v4
     - name: Check existing Python
+      shell: bash
       id: check-python
       run: |
         if command -v python &> /dev/null; then
@@ -71,10 +72,12 @@ runs:
         python-version: "3.12"
 
     - name: Install dependencies
+      shell: bash
       run: pip install -r requirements.txt
 
     - name: Build input and output URIs
       id: build-uris
+      shell: bash
       run: |
         INPUT="${{ inputs.input_path }}"
         OUTPUT="${{ inputs.output }}"
@@ -97,6 +100,7 @@ runs:
 
     - name: Run Evidently CLI Report
       id: run-cli
+      shell: bash
       env:
         EVIDENTLY_API_KEY: ${{ inputs.api_key }}
       run: |
@@ -113,16 +117,19 @@ runs:
 
     - name: Extract report link from CLI output
       id: extract-link
+      shell: bash
       run: |
         LINK=$(grep -oE 'Saving snapshot to (http[s]?://[^ ]+)' output.log | head -n1 | sed 's/Saving snapshot to //')
         echo "found_link=$LINK" >> $GITHUB_OUTPUT
 
     - name: Post result link or upload artifacts
+      shell: bash
       if: ${{ steps.extract-link.outputs.found_link != '' }}
       run: |
         echo "::notice title=Evidently Report Link::${{ steps.extract-link.outputs.found_link }}"
 
     - name: Upload result artifacts
+      shell: bash
       if: ${{ inputs.upload_artifacts == 'true' && steps.extract-link.outputs.found_link == '' }}
       uses: actions/upload-artifact@v4
       with:
