@@ -127,7 +127,6 @@ runs:
       env:
         EVIDENTLY_API_KEY: ${{ inputs.api_key }}
       run: |
-        set -o pipefail
         evidently report \
           ${{ inputs.config_path }} \
           "${{ steps.build-uris.outputs.input }}" \
@@ -137,7 +136,8 @@ runs:
           $( [ "${{ inputs.test_summary }}" = "true" ] && echo "--test-summary" ) \
           $( [ "${{ inputs.save_dataset }}" = "false" ] && echo "--no-save-dataset" ) \
           $( [ "${{ inputs.save_report }}" = "false" ] && echo "--no-save-report" ) | tee output.log
-        echo "exit_code=$?" >> $GITHUB_OUTPUT
+        CLI_EXIT_CODE=${PIPESTATUS[0]}
+        echo "exit_code=$CLI_EXIT_CODE" >> $GITHUB_OUTPUT
 
     - name: Extract report link from CLI output
       id: extract-link
