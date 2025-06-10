@@ -1,0 +1,121 @@
+name: "Run Evidently Report"
+description: "Run Evidently CLI report with flexible local/cloud output and smart result linking"
+author: "Mikhail Sveshnikov"
+
+branding:
+  icon: check-square
+  color: "red"
+
+inputs:
+  config_path:
+    description: "Report configuration path"
+    required: true
+  input_path:
+    description: "Input dataset URI"
+    required: false
+  reference_path:
+    description: "Reference dataset URI"
+    required: false
+  output:
+    description: "Output URI"
+    required: false
+  dataset_name:
+    description: "Dataset name"
+    required: false
+  test_summary:
+    description: "Run tests summary"
+    required: false
+    default: "false"
+  save_dataset:
+    description: "Save output dataset"
+    required: false
+    default: "true"
+  save_report:
+    description: "Save output report"
+    required: false
+    default: "true"
+  project_id:
+    description: "Evidently Cloud project ID"
+    required: false
+  dataset_id:
+    description: "Evidently Cloud dataset ID"
+    required: false
+  base_url:
+    description: "Evidently Cloud base URL"
+    required: false
+    default: "app.evidently.cloud"
+  upload_artifacts:
+    description: "Upload result files as GHA artifacts"
+    required: false
+    default: "false"
+  api_key:
+    description: "Evidently API Key"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Build input and output URIs
+      id: build-uris
+      run: |
+        INPUT="${{ inputs.input_path }}"
+        OUTPUT="${{ inputs.output }}"
+        SHA="${{ github.sha }}"
+
+        if [ -n "${{ inputs.dataset_id }}" ]; then
+          INPUT="cloud://${{ inputs.base_url }}/${{ inputs.dataset_id }}"
+        fi
+
+        if [ -n "${{ inputs.project_id }}" ]; then
+          OUTPUT="cloud://${{ inputs.base_url }}/${{ inputs.project_id }}"
+        fi
+
+        if [ -z "$OUTPUT" ]; then
+          OUTPUT="evidently_report_$SHA"
+        fi
+
+        echo "input=$INPUT" >> $GITHUB_OUTPUT
+        echo "output=$OUTPUT" >> $GITHUB_OUTPUT
+
+    - name: Run Evidently CLI Report
+      id: run-cli
+      env:
+        EVIDENTLY_API_KEY: ${{ inputs.api_key }}
+      run: |
+        set -o pipefail
+        evidently report \
+          ${{ inputs.config_path }} \
+          "${{ steps.build-uris.outputs.input }}" \
+          "${{ steps.build-uris.outputs.output }}" \
+          $( [ -n "${{ inputs.reference_path }}" ] && echo "--reference-path ${{ inputs.reference_path }}" ) \
+          $( [ -n "${{ inputs.dataset_name }}" ] && echo "--name ${{ inputs.dataset_name }}" ) \
+          $( [ "${{ inputs.test_summary }}" = "true" ] && echo "--test-summary" ) \
+          $( [ "${{ inputs.save_dataset }}" = "false" ] && echo "--no-save-dataset" ) \
+          $( [ "${{ inputs.save_report }}" = "false" ] && echo "--no-save-report" ) | tee output.log
+
+    - name: Extract report link from CLI output
+      id: extract-link
+      run: |
+        LINK=$(grep -oE 'Saving snapshot to (http[s]?://[^ ]+)' output.log | head -n1 | sed 's/Saving snapshot to //')
+        echo "found_link=$LINK" >> $GITHUB_OUTPUT
+
+    - name: Post result link or upload artifacts
+      if: ${{ steps.extract-link.outputs.found_link != '' }}
+      run: |
+        echo "::notice title=Evidently Report Link::${{ steps.extract-link.outputs.found_link }}"
+
+    - name: Upload result artifacts
+      if: ${{ inputs.upload_artifacts == 'true' && steps.extract-link.outputs.found_link == '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: evidently-results
+        path: ${{ steps.build-uris.outputs.output }}
