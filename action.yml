@@ -134,7 +134,7 @@ runs:
           "${{ steps.build-uris.outputs.input }}" \
           "${{ steps.build-uris.outputs.output }}" \
           $( [ -n "${{ inputs.reference_path }}" ] && echo "--reference-path ${{ inputs.reference_path }}" ) \
-          $( [ -n "${{ inputs.dataset_name }}" ] && echo "--name ${{ inputs.dataset_name }}" ) \
+          $( [ -n "${{ inputs.dataset_name }}" ] && echo "--dataset-name ${{ inputs.dataset_name }}" ) \
           $( [ "${{ inputs.test_summary }}" = "true" ] && echo "--test-summary" ) \
           $( [ "${{ inputs.save_dataset }}" = "false" ] && echo "--no-save-dataset" ) \
           $( [ "${{ inputs.save_report }}" = "false" ] && echo "--no-save-report" ) | tee output.log
