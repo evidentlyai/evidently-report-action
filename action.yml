@@ -126,6 +126,7 @@ runs:
       continue-on-error: true
       env:
         EVIDENTLY_API_KEY: ${{ inputs.api_key }}
+        FORCE_COLOR: "1"
       run: |
         set +o pipefail
         evidently report \
