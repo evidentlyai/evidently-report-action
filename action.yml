@@ -146,7 +146,7 @@ runs:
       id: extract-link
       shell: bash
       run: |
-        LINK=$(grep -oE 'Saving snapshot to (http[s]?://[^ ]+)' output.log | head -n1 | sed 's/Saving snapshot to //')
+        LINK=$(grep -oE 'Saving (snapshot|dataset) to (http[s]?://[^ ]+)' output.log | head -n1 | sed -E 's/Saving (snapshot|dataset) to //') || true
         echo "found_link=$LINK" >> $GITHUB_OUTPUT
 
     - name: Post result link or upload artifacts
