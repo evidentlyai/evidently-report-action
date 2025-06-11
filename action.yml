@@ -55,6 +55,10 @@ inputs:
     description: 'Use pip cache'
     required: false
     default: 'true'
+  check-link:
+    description: "Whether to post a check run with an external link"
+    required: false
+    default: "true"
 
 outputs:
   exit_code:
@@ -161,6 +165,48 @@ runs:
       with:
         name: evidently-results
         path: ${{ steps.build-uris.outputs.output }}
+
+    - name: Check permissions for GITHUB_TOKEN
+      if: ${{ inputs.check-link == 'true' }}
+      id: permissions
+      shell: bash
+      run: |
+        PERMISSIONS_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/actions/permissions)
+        
+        CHECKS_PERMISSION=$(echo "$PERMISSIONS_RESPONSE" | jq -r '.permissions.checks')
+        
+        if [ "$CHECKS_PERMISSION" = "write" ]; then
+          echo "checks_write=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "checks_write=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Post Check Run with external link
+      if: ${{ inputs.check-link == 'true' && steps.permissions.outputs.checks_write == 'true' && steps.extract-link.outputs.found_link != '' }}
+      shell: bash
+      run: |
+        curl -X POST \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github+json" \
+          https://api.github.com/repos/${{ github.repository }}/check-runs \
+          -d '{
+            "name": "Evidently Report",
+            "head_sha": "'${{ github.sha }}'",
+            "status": "completed",
+            "conclusion": "success",
+            "external_url": "${{ steps.extract-link.outputs.found_link }}", 
+            "output": {
+              "title": "External Report Ready",
+              "summary": "View the external link for details."
+            }
+          }'
+
+    - name: Warn if insufficient permissions
+      if: ${{ inputs.check-link == 'true' && steps.permissions.outputs.checks_write != 'true' && steps.extract-link.outputs.found_link != ''}}
+      shell: bash
+      run: |
+        echo "::warning title=Permissions Issue::GITHUB_TOKEN lacks 'checks: write' permission. Skipping external check run."
 
     - name: Fail action if CLI failed
       if: steps.run-cli.outputs.exit_code != '0'
