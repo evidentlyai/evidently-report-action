@@ -3,7 +3,7 @@
 [![GitHub Action](https://img.shields.io/badge/Action-Evidently-blue?logo=githubactions)](https://github.com/evidentlyai/evidently-report-action)
 
 A flexible, CI-friendly GitHub Action to run Evidently's CLI for data and ML model monitoring reports.  
-This action integrates Evidently's evaluation workflows into your CI pipelines with options for local and cloud storage, test summaries, smart result links, and optional GitHub Check Runs.
+This action integrates Evidently's evaluation workflows into your CI pipelines with options for local and cloud storage, test summaries and smart result links.
 
 ---
 
@@ -14,7 +14,7 @@ This action runs [Evidently CLI](https://github.com/evidentlyai/evidently) repor
 ✅ Running descriptors, metrics, and tests  
 ✅ Failing the job if any test fails  
 ✅ Saving results locally or uploading to Evidently Cloud  
-✅ Auto-linking results via workflow notices or GitHub Check Runs  
+✅ Auto-linking results via workflow notices or GitHub Commit Status
 ✅ Optional artifact uploads of result files  
 
 ---
@@ -108,14 +108,12 @@ Where `conf` is the name of the config object in the Python file.
 
 ## 🔒 Required Permissions
 
-For the action to function properly (especially for Check Runs and linking), your workflow should declare at least:
+For linking report link as commit status, your workflow should declare at least:
 
 ```yaml
 permissions:
-  checks: write
   contents: read
-  pull-requests: read
-  actions: read
+  statuses: write
 ```
 
 ---
