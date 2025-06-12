@@ -171,28 +171,50 @@ runs:
       shell: bash
       run: |
         echo "Attempting to create external check run..."
-
-        RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X POST \
+      
+        CREATE_RESPONSE=$(curl -s -o create_response.json -w "%{http_code}" -X POST \
           -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github+json" \
           https://api.github.com/repos/${{ github.repository }}/check-runs \
           -d '{
             "name": "Evidently Report",
             "head_sha": "'${{ github.sha }}'",
-            "status": "completed",
-            "conclusion": "success",
-            "external_url": "${{ steps.extract-link.outputs.found_link }}", 
-            "output": {
-              "title": "External Report Ready",
-              "summary": "View the external link for details."
-            }
+            "status": "in_progress"
           }')
-
-        if [ "$RESPONSE" -eq 201 ]; then
+      
+        if [ "$CREATE_RESPONSE" -eq 201 ]; then
           echo "✅ Check run created successfully."
+      
+          CHECK_RUN_ID=$(jq -r '.id' create_response.json)
+          echo "Check Run ID: $CHECK_RUN_ID"
+      
+          echo "Updating check run with external link..."
+      
+          UPDATE_RESPONSE=$(curl -s -o update_response.json -w "%{http_code}" -X PATCH \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/check-runs/$CHECK_RUN_ID \
+            -d '{
+              "name": "Evidently Report",
+              "status": "completed",
+              "conclusion": "success",
+              "external_url": "'${{ steps.extract-link.outputs.found_link }}'",
+              "output": {
+                "title": "External Report Ready",
+                "summary": "View the external link for details."
+              }
+            }')
+      
+          if [ "$UPDATE_RESPONSE" -eq 200 ]; then
+            echo "✅ Check run updated successfully with external link."
+          else
+            echo "::warning title=Check Run Update Failed::Could not update check run (HTTP $UPDATE_RESPONSE)."
+            cat update_response.json
+          fi
+      
         else
-          echo "::warning title=Check Run Skipped::Could not create check run (HTTP $RESPONSE). The token might lack 'checks: write' permission."
-          cat response.json
+          echo "::warning title=Check Run Skipped::Could not create check run (HTTP $CREATE_RESPONSE). The token might lack 'checks: write' permission."
+          cat create_response.json
         fi
 
 
