@@ -38,7 +38,7 @@ This action runs [Evidently CLI](https://github.com/evidentlyai/evidently) repor
 ## 📥 Inputs
 
 | Name               | Description                                                 | Required | Default                  |
-| :----------------- | :---------------------------------------------------------- | :------- | :----------------------- |
+|:-------------------|:------------------------------------------------------------|:---------|:-------------------------|
 | `config_path`      | Path to Evidently report config file (JSON or Python `.py`) | ✅        | —                        |
 | `input_path`       | URI to current dataset (local file or `cloud://` URI)       | ❌        | —                        |
 | `reference_path`   | URI to reference dataset (optional)                         | ❌        | —                        |
