@@ -166,28 +166,15 @@ runs:
         name: evidently-results
         path: ${{ steps.build-uris.outputs.output }}
 
-    - name: Check permissions for GITHUB_TOKEN
-      if: ${{ inputs.check-link == 'true' }}
-      id: permissions
-      shell: bash
-      run: |
-        PERMISSIONS_RESPONSE=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-          https://api.github.com/repos/${{ github.repository }}/actions/permissions)
-        
-        CHECKS_PERMISSION=$(echo "$PERMISSIONS_RESPONSE" | jq -r '.permissions.checks')
-        echo $PERMISSIONS_RESPONSE
-        echo $CHECKS_PERMISSION
-        if [ "$CHECKS_PERMISSION" = "write" ]; then
-          echo "checks_write=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "checks_write=false" >> "$GITHUB_OUTPUT"
-        fi
+
 
     - name: Post Check Run with external link
       if: ${{ inputs.check-link == 'true' && steps.permissions.outputs.checks_write == 'true' && steps.extract-link.outputs.found_link != '' }}
       shell: bash
       run: |
-        curl -X POST \
+        echo "Attempting to create external check run..."
+
+        RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X POST \
           -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github+json" \
           https://api.github.com/repos/${{ github.repository }}/check-runs \
@@ -201,13 +188,15 @@ runs:
               "title": "External Report Ready",
               "summary": "View the external link for details."
             }
-          }'
+          }')
 
-    - name: Warn if insufficient permissions
-      if: ${{ inputs.check-link == 'true' && steps.permissions.outputs.checks_write != 'true' && steps.extract-link.outputs.found_link != ''}}
-      shell: bash
-      run: |
-        echo "::warning title=Permissions Issue::GITHUB_TOKEN lacks 'checks: write' permission. Skipping external check run."
+        if [ "$RESPONSE" -eq 201 ]; then
+          echo "✅ Check run created successfully."
+        else
+          echo "::warning title=Check Run Skipped::Could not create check run (HTTP $RESPONSE). The token might lack 'checks: write' permission."
+          cat response.json
+        fi
+
 
     - name: Fail action if CLI failed
       if: steps.run-cli.outputs.exit_code != '0'
