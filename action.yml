@@ -175,6 +175,7 @@ runs:
           https://api.github.com/repos/${{ github.repository }}/actions/permissions)
         
         CHECKS_PERMISSION=$(echo "$PERMISSIONS_RESPONSE" | jq -r '.permissions.checks')
+        echo $PERMISSIONS_RESPONSE
         echo $CHECKS_PERMISSION
         if [ "$CHECKS_PERMISSION" = "write" ]; then
           echo "checks_write=true" >> "$GITHUB_OUTPUT"
