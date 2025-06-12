@@ -166,10 +166,8 @@ runs:
         name: evidently-results
         path: ${{ steps.build-uris.outputs.output }}
 
-
-
     - name: Post Check Run with external link
-      if: ${{ inputs.check-link == 'true' && steps.permissions.outputs.checks_write == 'true' && steps.extract-link.outputs.found_link != '' }}
+      if: ${{ inputs.check-link == 'true' && steps.extract-link.outputs.found_link != '' }}
       shell: bash
       run: |
         echo "Attempting to create external check run..."
