@@ -180,7 +180,7 @@ runs:
             "name": "Evidently Report",
             "head_sha": "'${{ github.sha }}'",
             "status": "in_progress",
-            "details_url": "'${{ steps.extract-link.outputs.found_link }}'",
+            "details_url": "'${{ steps.extract-link.outputs.found_link }}'"
           }')
       
         if [ "$CREATE_RESPONSE" -eq 201 ]; then
