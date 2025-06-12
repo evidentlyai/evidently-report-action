@@ -179,7 +179,8 @@ runs:
           -d '{
             "name": "Evidently Report",
             "head_sha": "'${{ github.sha }}'",
-            "status": "in_progress"
+            "status": "in_progress",
+            "details_url": "'${{ steps.extract-link.outputs.found_link }}'",
           }')
       
         if [ "$CREATE_RESPONSE" -eq 201 ]; then
@@ -198,7 +199,7 @@ runs:
               "name": "Evidently Report",
               "status": "completed",
               "conclusion": "success",
-              "external_url": "'${{ steps.extract-link.outputs.found_link }}'",
+              "details_url": "'${{ steps.extract-link.outputs.found_link }}'",
               "output": {
                 "title": "External Report Ready",
                 "summary": "View the external link for details."
