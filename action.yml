@@ -152,8 +152,17 @@ runs:
       run: |
         MATCH=$(grep -oE 'Saving (snapshot|dataset) to (http[s]?://[^ ]+)' output.log | head -n1) || true
         if [ -n "$MATCH" ]; then
-          TYPE=$(echo "$MATCH" | sed -E 's/Saving (snapshot|dataset) to .*/\1/')
+          RAW_TYPE=$(echo "$MATCH" | sed -E 's/Saving (snapshot|dataset) to .*/\1/')
           LINK=$(echo "$MATCH" | sed -E 's/Saving (snapshot|dataset) to //')
+    
+          if [ "$RAW_TYPE" = "snapshot" ]; then
+            TYPE="Report"
+          elif [ "$RAW_TYPE" = "dataset" ]; then
+            TYPE="Dataset"
+          else
+            TYPE="Unknown"
+          fi
+
           echo "found_link=$LINK" >> $GITHUB_OUTPUT
           echo "link_type=$TYPE" >> $GITHUB_OUTPUT
         else
