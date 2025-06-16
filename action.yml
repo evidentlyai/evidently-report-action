@@ -150,14 +150,22 @@ runs:
       id: extract-link
       shell: bash
       run: |
-        LINK=$(grep -oE 'Saving (snapshot|dataset) to (http[s]?://[^ ]+)' output.log | head -n1 | sed -E 's/Saving (snapshot|dataset) to //') || true
-        echo "found_link=$LINK" >> $GITHUB_OUTPUT
+        MATCH=$(grep -oE 'Saving (snapshot|dataset) to (http[s]?://[^ ]+)' output.log | head -n1) || true
+        if [ -n "$MATCH" ]; then
+          TYPE=$(echo "$MATCH" | sed -E 's/Saving (snapshot|dataset) to .*/\1/')
+          LINK=$(echo "$MATCH" | sed -E 's/Saving (snapshot|dataset) to //')
+          echo "found_link=$LINK" >> $GITHUB_OUTPUT
+          echo "link_type=$TYPE" >> $GITHUB_OUTPUT
+        else
+          echo "found_link=" >> $GITHUB_OUTPUT
+          echo "link_type=" >> $GITHUB_OUTPUT
+        fi
 
     - name: Post result link or upload artifacts
       shell: bash
       if: ${{ steps.extract-link.outputs.found_link != '' }}
       run: |
-        echo "::notice title=Evidently Report Link::${{ steps.extract-link.outputs.found_link }}"
+        echo "::notice title=Evidently ${{ steps.extract-link.outputs.link_type }} Link::${{ steps.extract-link.outputs.found_link }}"
 
     - name: Upload result artifacts
       if: ${{ inputs.upload_artifacts == 'true' && steps.extract-link.outputs.found_link == '' }}
@@ -187,8 +195,8 @@ runs:
           -d '{
             "state": "'"$STATE"'",
             "target_url": "'${{ steps.extract-link.outputs.found_link }}'",
-            "description": "Evidently Report",
-            "context": "Evidently Report"
+            "description": "Evidently ${{ steps.extract-link.outputs.link_type }}",
+            "context": "Evidently ${{ steps.extract-link.outputs.link_type }}"
           }')
       
         if [ "$RESPONSE" -eq 201 ]; then
