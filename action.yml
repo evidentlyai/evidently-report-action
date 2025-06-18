@@ -71,7 +71,18 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Check for existing checkout
+      id: check-repo
+      shell: bash
+      run: |
+        if [ -d ".git" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - uses: actions/checkout@v4
+      if: steps.check-repo.outputs.exists == 'false'
 
     - name: Check if actions/setup-python has run
       id: check-python-setup
