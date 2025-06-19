@@ -110,7 +110,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install git+https://github.com/evidentlyai/evidently@feature/eval-cli
+      run: pip install "evidently>=0.7.8"
 
     - name: Build input and output URIs
       id: build-uris
