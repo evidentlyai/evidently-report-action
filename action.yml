@@ -3,7 +3,7 @@ description: "Run Evidently CLI report with flexible local/cloud output and smar
 author: "Mikhail Sveshnikov"
 
 branding:
-  icon: check-square
+  icon: bar-chart
   color: "red"
 
 inputs:
